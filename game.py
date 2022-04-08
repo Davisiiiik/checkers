@@ -23,6 +23,8 @@ def main():
     print "\n"
     print "\n"
 
+    agent_module = "arthur"
+
     n = -1
     while not n in [0, 1, 2]:
         n = raw_input("How many human players? (0, 1, 2): ")
@@ -31,6 +33,7 @@ def main():
         except ValueError:
             print "Please input 0, 1, or 2."
 
+    # Two human players
     if n == 2:
         B = checkers.CheckerBoard()
         print "Black moves first."
@@ -83,9 +86,9 @@ def main():
 
         return 0
 
-
+    # One human player
     elif n == 1:
-        agent_module = raw_input("Enter name of agent module: ");
+        #agent_module = raw_input("Enter name of agent module: ")
         __import__(agent_module)
         agent_module = sys.modules[agent_module]
         cpu = agent.CheckersAgent(agent_module.move_function)
@@ -147,12 +150,14 @@ def main():
         else:
             print "Congrats White, you win!"
         return 0
+
+    # Zero human players
     else:
-        agent_module = raw_input("Enter name of first agent module: ");
+        agent_module = raw_input("Enter name of first agent module: ")
         __import__(agent_module)
         agent_module = sys.modules[agent_module]
         cpu_1 = agent.CheckersAgent(agent_module.move_function)
-        agent_module = raw_input("Enter name of second agent module: ");
+        agent_module = raw_input("Enter name of second agent module: ")
         __import__(agent_module)
         agent_module = sys.modules[agent_module]
         cpu_2 = agent.CheckersAgent(agent_module.move_function)
