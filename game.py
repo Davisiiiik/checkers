@@ -54,6 +54,9 @@ def main():
             for (i, move) in enumerate(get_move_strings(B)):
                 print "Move " + str(i) + ": " + move
 
+            print "Legal moves:", legal_moves, type(legal_moves)
+            get_mandatory_moves(B)
+
             while True:
                 move_idx = raw_input("Enter your move number: ")
                 try:
@@ -68,7 +71,7 @@ def main():
                     print "Please input a valid move number."
                     continue
 
-            B.make_move(legal_moves[move_idx])
+            following_move = B.make_move(legal_moves[move_idx])
 
             # If jumps remain, then the board will not update current player
             if B.active == current_player:
@@ -184,9 +187,43 @@ def main():
             return 0
 
 
-
 def game_over(board):
     return len(board.get_moves()) == 0
+
+
+def get_mandatory_moves(board):
+    jumps_bin = []
+    jumps = []
+    # Pop unused bits
+    for i, move in enumerate(board.mandatory_jumps):
+        move = abs(move)
+        jumps_bin.append(move & (0xFF))
+        jumps_bin[i] = jumps_bin[i] | ((move & (0xFF << 9)) >> 1)
+        jumps_bin[i] = jumps_bin[i] | ((move & (0xFF << 18)) >> 2)
+        jumps_bin[i] = jumps_bin[i] | ((move & (0xFF << 27)) >> 3)
+
+        pom = 0
+        # Find both ones in bin representation of piece and write them as tuple
+        for j in range(32):
+            if jumps_bin[i] & (1 << j):
+                if pom:
+                    jumps.append((pom, j + 1))
+                    jumps.append((j + 1, pom))
+                    break
+                pom = j + 1
+        
+    return jumps
+
+
+def remove_moves_by_mandatory(mandatory_jumps, jumps):
+    if not jumps:
+        return None
+
+    for jump in jumps:
+        if jump not in mandatory_jumps:
+            jumps.remove(jump)
+    return jumps
+
 
 def get_move_strings(board):
     rfj = board.right_forward_jumps()
@@ -203,6 +240,14 @@ def get_move_strings(board):
                     for (i, bit) in enumerate(bin(rbj)[::-1]) if bit ==  '1']
         lbj = [(1 + i - i//9, 1 + (i - 10) - (i - 10)//9)
                     for (i, bit) in enumerate(bin(lbj)[::-1]) if bit == '1']
+
+        if board.mandatory_jumps:
+            mandatory_jumps = get_mandatory_moves(board)
+            remove_moves_by_mandatory(mandatory_jumps, rfj)
+            remove_moves_by_mandatory(mandatory_jumps, lfj)
+            remove_moves_by_mandatory(mandatory_jumps, rbj)
+            remove_moves_by_mandatory(mandatory_jumps, lbj)
+
 
         if board.active == BLACK:
             regular_moves = ["%i to %i" % (orig, dest) for (orig, dest) in rfj + lfj]
