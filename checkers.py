@@ -83,7 +83,9 @@ class CheckerBoard:
         if self.jump:
             self.mandatory_jumps = self.jumps_from(destination)
             if self.mandatory_jumps:
-                return
+                print "Destionation:", destination
+                print "Mandatory jumps:", self.mandatory_jumps
+                return self.mandatory_jumps
 
         if active == BLACK and (destination & 0x780000000) != 0:
             self.backward[BLACK] |= destination
@@ -219,7 +221,7 @@ class CheckerBoard:
 
             The argument piece should be of the form 2**n, where n + 1 is
             the square of the piece in question (using the internal numeric
-            representaiton of the board).
+            representation of the board).
         """
         if self.active == BLACK:
             rfj = (self.empty >> 8) & (self.pieces[self.passive] >> 4) & piece
