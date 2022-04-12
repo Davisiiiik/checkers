@@ -8,7 +8,7 @@
 # Last updated: July 21, 2014
 
 import sys
-import rospy
+from numpy import log2
 
 import checkers
 import agent
@@ -26,57 +26,49 @@ def main():
     choice = node.get_starting_player()
 
     turn = 0
+    ai_move = []
     B = checkers.CheckerBoard()
     current_player = B.active
-    
+
     while not B.is_over():
         print B
         if turn % 2 == choice:
             legal_moves = B.get_moves()
+            legal_move_tuples = get_move_tuples(B)
 
-            if B.jump:
-                print "Make jump."
-                print ""
-            else:
-                print "Turn %i" % (turn + 1)
-                print ""
-            for (i, move) in enumerate(get_move_strings(B)):
+            for (i, move) in enumerate(legal_move_tuples):
                 print "Move " + str(i) + ": " + str(move)
+
+            node.send_ai_move(ai_move, legal_move_tuples)
+            ai_move = []
+
             while True:
-                #move_idx = raw_input("Enter your move number: ")
-                print node.get_human_move()
-                if node.human_move in get_move_strings(B):
-                    print "YES"
+                human_move = node.get_human_move()
+
+                try:
+                    move_idx = get_move_tuples(B).index(human_move)
+                except ValueError:
+                    print "ERROR: Move is not legal!"
+                    node.send_ai_move((-1, -1), [])
                 else:
-                    print "NO"
+                    print "Move is legal"
+                    break
 
-
-                #try:
-                #    move_idx = int(move_idx)
-                #except ValueError:
-                #    print "Please input a valid move number."
-                #    continue
-                #if move_idx in range(len(legal_moves)):
-                #    break
-                #else:
-                #    print "Please input a valid move number."
-                #    continue
-            #B.make_move(legal_moves[move_idx])
-            # If jumps remain, then the board will not update current player
-            if B.active == current_player:
-                print "Jumps must be taken."
-                continue
-            else:
-                current_player = B.active
-                turn += 1
+            B.make_move(legal_moves[move_idx])
         else:
-            B.make_move(cpu.make_move(B))
-            if B.active == current_player:
-                print "Jumps must be taken."
-                continue
-            else:
-                current_player = B.active
-                turn += 1
+            # AI Move
+            ai_move_int = cpu.make_move(B)
+            ai_move = int_move_to_tuple(B, ai_move_int)
+            B.make_move(ai_move_int)
+
+        # If jumps remain, then the board will not update current player
+        if B.active == current_player:
+            print "Jumps must be taken."
+            continue
+        else:
+            current_player = B.active
+            turn += 1
+
     print B
     if B.active == WHITE:
         print "Congrats Black, you win!"
@@ -89,41 +81,41 @@ def game_over(board):
     return len(board.get_moves()) == 0
 
 
+def pop_unused_bits(move):
+    tmp = move & (0xFF)
+    tmp = tmp | ((move & (0xFF << 9)) >> 1)
+    tmp = tmp | ((move & (0xFF << 18)) >> 2)
+    tmp = tmp | ((move & (0xFF << 27)) >> 3)
+    return tmp
+
+
+def int_move_to_tuple(board, move):
+    # FUNCTION MUST BE USED BEFORE MOVE!!!
+    move = abs(move)
+
+    # Determine which is piece and which is destination position
+    piece = move & (board.pieces[0] | board.pieces[1])
+    dest = move & ~piece
+
+    # Pop unused bits and get bit positions
+    piece = int(log2(pop_unused_bits(piece)) + 1)
+    dest = int(log2(pop_unused_bits(dest)) + 1)
+
+    return (piece, dest)
+
+
 def get_mandatory_moves(board):
-    jumps_bin = []
     jumps = []
-    # Pop unused bits
-    for i, move in enumerate(board.mandatory_jumps):
-        move = abs(move)
-        jumps_bin.append(move & (0xFF))
-        jumps_bin[i] = jumps_bin[i] | ((move & (0xFF << 9)) >> 1)
-        jumps_bin[i] = jumps_bin[i] | ((move & (0xFF << 18)) >> 2)
-        jumps_bin[i] = jumps_bin[i] | ((move & (0xFF << 27)) >> 3)
+    for move in board.mandatory_jumps:
+        jumps.append(int_move_to_tuple(board, move))
 
-        pom = 0
-        # Find both ones in bin representation of piece and write them as tuple
-        for j in range(32):
-            if jumps_bin[i] & (1 << j):
-                if pom:
-                    jumps.append((pom, j + 1))
-                    jumps.append((j + 1, pom))
-                    break
-                pom = j + 1
-        
     return jumps
 
 
-def remove_moves_by_mandatory(mandatory_jumps, jumps):
-    if not jumps:
-        return None
+def get_move_tuples(board):
+    if board.mandatory_jumps:
+        return get_mandatory_moves(board)
 
-    for jump in jumps:
-        if jump not in mandatory_jumps:
-            jumps.remove(jump)
-    return jumps
-
-
-def get_move_strings(board):
     rfj = board.right_forward_jumps()
     lfj = board.left_forward_jumps()
     rbj = board.right_backward_jumps()
@@ -138,14 +130,6 @@ def get_move_strings(board):
                     for (i, bit) in enumerate(bin(rbj)[::-1]) if bit ==  '1']
         lbj = [(1 + i - i//9, 1 + (i - 10) - (i - 10)//9)
                     for (i, bit) in enumerate(bin(lbj)[::-1]) if bit == '1']
-
-        if board.mandatory_jumps:
-            mandatory_jumps = get_mandatory_moves(board)
-            remove_moves_by_mandatory(mandatory_jumps, rfj)
-            remove_moves_by_mandatory(mandatory_jumps, lfj)
-            remove_moves_by_mandatory(mandatory_jumps, rbj)
-            remove_moves_by_mandatory(mandatory_jumps, lbj)
-
 
         if board.active == BLACK:
             return rfj + lfj + rbj + lbj
@@ -171,6 +155,7 @@ def get_move_strings(board):
         return rf + lf + rb + lb
     else:
         return rf + lf + rb + lb
+
 
 if __name__ == '__main__':
     try:
