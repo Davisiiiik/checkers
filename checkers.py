@@ -83,9 +83,7 @@ class CheckerBoard:
         if self.jump:
             self.mandatory_jumps = self.jumps_from(destination)
             if self.mandatory_jumps:
-                print "Destionation:", destination
-                print "Mandatory jumps:", self.mandatory_jumps
-                return self.mandatory_jumps
+                return
 
         if active == BLACK and (destination & 0x780000000) != 0:
             self.backward[BLACK] |= destination
