@@ -15,7 +15,7 @@ class RosComm(object):
         # Node initialization
         rospy.init_node('game_logic')
         self.ai_move = rospy.Publisher('/robocheckers/ai_move', String, queue_size=10)
-        rospy.Subscriber('/robocheckers/human_move', String, self.get_human_move_list)
+        rospy.Subscriber('/robocheckers/human_move', String, self.receive_human_move_list)
 
         # Prepare human_move tuple attribute
         self.human_move_list = None
@@ -36,7 +36,7 @@ class RosComm(object):
         self.ai_move.publish(msg)
 
 
-    def get_human_move_list(self, data):
+    def receive_human_move_list(self, data):
         """
             Method for receiving data from game_interface node
         """
