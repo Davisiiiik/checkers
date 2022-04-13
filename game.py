@@ -23,7 +23,7 @@ def main():
     cpu = agent.CheckersAgent(arthur.move_function)
 
     # Determin who starts, 0 -> Human go first, 1 -> AI go first
-    choice = node.get_starting_player()
+    player_order = node.get_starting_player()
 
     turn = 0
     ai_move = []
@@ -32,7 +32,7 @@ def main():
 
     while not B.is_over():
         print B
-        if turn % 2 == choice:
+        if turn % 2 == player_order:
             legal_moves = B.get_moves()
             legal_move_tuples = get_move_tuples(B)
 

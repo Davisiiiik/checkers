@@ -20,8 +20,8 @@ class RosComm(object):
         # Prepare human_move tuple attribute
         self.human_move_list = None
         self.human_move = None
-        # Prepare choice attribute, 0 -> Human go first, 1 -> AI go first
-        self.choice = None
+        # Prepare player_order attribute, 0 -> Human go first, 1 -> AI go first
+        self.player_order = None
 
 
     def send_ai_move(self, move, options):
@@ -30,8 +30,11 @@ class RosComm(object):
             tuple move:
             list of tuples options:
         """
-        test = [self.tuple_move_to_list(move), options]
-        msg = '|'.join(str(e) for e in test)
+        move = self.tuple_move_to_list(move)
+        for i, option in enumerate(options):
+            options[i] = self.tuple_move_to_list(option)
+
+        msg = '|'.join(str(e) for e in [move, options])
 
         self.ai_move.publish(msg)
 
@@ -57,8 +60,8 @@ class RosComm(object):
             tmp = (pos[1]-1)*4 + (pos[0]+1-(pos[1]%2))/2
             self.human_move.append(tmp)
 
-        # If choice is 1, rotate the chessboard
-        if self.choice:
+        # If player_order is 1, rotate the chessboard
+        if self.player_order:
             self.human_move[0] = 33 - self.human_move[0]
             self.human_move[1] = 33 - self.human_move[1]
 
@@ -76,8 +79,8 @@ class RosComm(object):
             y = int((pos-1)/4+1)
             x = ((pos-1)%4+1)*2-1+y%2
 
-            # If choice is 1, rotate the chessboard
-            if self.choice:
+            # If player_order is 1, rotate the chessboard
+            if self.player_order:
                 x = 9-x
                 y = 9-y
 
@@ -90,7 +93,7 @@ class RosComm(object):
         """
             Method to determine which player go first
         """
-        if self.choice != None:
+        if self.player_order != None:
             return None
 
         while True:
@@ -99,20 +102,21 @@ class RosComm(object):
             rospy.sleep(0.001)
 
             if (0, 1) in self.human_move_list:
-                self.choice = 1
+                self.player_order = 1
                 break
             elif (0, 0) in self.human_move_list:
-                self.choice = 0
+                self.player_order = 0
                 break
             else:
-                print "ERROR: Invalid starting message! Send '[(0, 0)]' or '[(0, 1)]'!"
+                print "ERROR: Invalid starting message! Expecting '[(0, 0)]' or '[(0, 1)]'!"
                 self.human_move_list = None
 
         self.human_move_list = None
 
-        return self.choice
+        return self.player_order
 
 if __name__ == '__main__':
+    # ONLY FOR TESTING
     node = RosComm()
 
     while True:
