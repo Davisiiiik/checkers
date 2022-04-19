@@ -56,7 +56,14 @@ class RosComm(object):
 
         # Calculate the square number from coordinations
         self.human_move = []
+
+
+        #for i in range(len(self.human_move_list)-1):
+        #    self.human_move.append([self.human_move_list[i], self.human_move_list[i+1]])
+
+
         for pos in self.human_move_list:
+            print "Run:", pos
             tmp = (pos[1]-1)*4 + (pos[0]+1-(pos[1]%2))/2
             self.human_move.append(tmp)
 

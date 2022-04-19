@@ -46,9 +46,9 @@ def main():
     current_player = B.active
 
     while not B.is_over():
-        print B
         if turn % 2 == player_order:
             if player_order == 0 and turn == 0:
+                print B
                 legal_moves = B.get_moves()
                 legal_move_tuples = get_move_tuples(B)
 
@@ -86,6 +86,7 @@ def main():
                     break
 
             B.make_move(legal_moves[move_idx])
+            print B
         else:
             # AI Move
             ai_move_int = cpu.make_move(B)
@@ -95,6 +96,7 @@ def main():
             legal_moves = B.get_moves()
             legal_move_tuples = get_move_tuples(B)
 
+            print B
             for (i, move) in enumerate(legal_move_tuples):
                 print "Move " + str(i) + ": " + str(move)
 
