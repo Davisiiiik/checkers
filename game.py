@@ -17,13 +17,28 @@ import robocheckers_link as robolink
 
 BLACK, WHITE = 0, 1
 
+# Activate or deactivate manual mode
+MANUAL = False
+
 def main():
     # Communication and CPU definition
     node = robolink.RosComm()
     cpu = agent.CheckersAgent(arthur.move_function)
 
     # Determin who starts, 0 -> Human go first, 1 -> AI go first
-    player_order = node.get_starting_player()
+    # Manual mode
+    if MANUAL:
+        while True:
+            player_order = raw_input("Enter 0 to go first and 1 to go second: ")
+            try:
+                player_order = int(player_order)
+                break
+            except ValueError:
+                print "Please input 0 or 1."
+                continue
+    # Automatic mode
+    else:
+        player_order = node.get_starting_player()
 
     turn = 0
     ai_move = []
@@ -43,7 +58,23 @@ def main():
             ai_move = []
 
             while True:
-                human_move = node.get_human_move()
+                # Manual mode
+                if MANUAL:
+                    move_idx = raw_input("Enter your move number: ")
+                    try:
+                        move_idx = int(move_idx)
+                    except ValueError:
+                        print "Please input a valid move number."
+                        continue
+                    if move_idx in range(len(legal_moves)):
+                        break
+                    else:
+                        print "Please input a valid move number."
+                        continue
+
+                # Automatic mode
+                else:
+                    human_move = node.get_human_move()
 
                 try:
                     move_idx = get_move_tuples(B).index(human_move)
