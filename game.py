@@ -48,14 +48,14 @@ def main():
     while not B.is_over():
         print B
         if turn % 2 == player_order:
-            legal_moves = B.get_moves()
-            legal_move_tuples = get_move_tuples(B)
+            if player_order == 0 and turn == 0:
+                legal_moves = B.get_moves()
+                legal_move_tuples = get_move_tuples(B)
 
-            for (i, move) in enumerate(legal_move_tuples):
-                print "Move " + str(i) + ": " + str(move)
+                for (i, move) in enumerate(legal_move_tuples):
+                    print "Move " + str(i) + ": " + str(move)
 
-            node.send_ai_move(ai_move, legal_move_tuples)
-            ai_move = []
+                node.send_ai_move([], legal_move_tuples)
 
             while True:
                 # Manual mode
@@ -91,6 +91,15 @@ def main():
             ai_move_int = cpu.make_move(B)
             ai_move = int_move_to_tuple(B, ai_move_int)
             B.make_move(ai_move_int)
+
+            legal_moves = B.get_moves()
+            legal_move_tuples = get_move_tuples(B)
+
+            for (i, move) in enumerate(legal_move_tuples):
+                print "Move " + str(i) + ": " + str(move)
+
+            node.send_ai_move(ai_move, legal_move_tuples)
+            ai_move = []
 
         # If jumps remain, then the board will not update current player
         if B.active == current_player:
