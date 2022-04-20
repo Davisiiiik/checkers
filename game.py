@@ -26,7 +26,6 @@ def main():
     player_order = node.get_starting_player()
 
     turn = 0
-    ai_move = []
     B = checkers.CheckerBoard()
     current_player = B.active
 
@@ -34,7 +33,6 @@ def main():
         if turn % 2 == player_order:
             if player_order == 0 and turn == 0:
                 print B
-                #legal_moves = B.get_moves()
                 legal_move_tuples = get_move_tuples(B)
 
                 for (i, move) in enumerate(legal_move_tuples):
@@ -52,14 +50,13 @@ def main():
                     break
                 else:
                     print "ERROR: Turn is not legal!"
-                    node.send_ai_move([], legal_move_tuples)
+                    node.send_ai_move([], get_move_tuples(B))
                     continue
 
-
+            # Move for every move in move_list
             for human_move in human_move_list:
                 legal_moves = B.get_moves()
-                move_tuples = get_move_tuples(B)
-                move_idx = move_tuples.index(human_move)
+                move_idx = get_move_tuples(B).index(human_move)
                 B.make_move(legal_moves[move_idx])
                 print B
 
@@ -77,11 +74,12 @@ def main():
                 print "Move " + str(i) + ": " + str(move)
 
             node.send_ai_move(ai_move, legal_move_tuples)
-            ai_move = []
 
         # If jumps remain, then the board will not update current player
         if B.active == current_player:
             print "Jumps must be taken."
+            if turn % 2 == player_order:
+                node.send_ai_move([], get_move_tuples(B))
             continue
         else:
             current_player = B.active
@@ -131,20 +129,22 @@ def get_mandatory_moves(board):
 
 
 def check_human_turn(board, human_move_list):
+    for human_move in human_move_list:
+        print "Checking human_move:", human_move
+        # Get legal moves
+        legal_moves = board.get_moves()
 
-    #for human_move in human_move_list:
-    human_move = human_move_list[0]
-    print "Performing human_move:", human_move
-    try:
-        move_idx = get_move_tuples(board).index(human_move)
-    except ValueError:
-        print "ERROR: Move is not legal!"
-    else:
-        print "Move is legal"
-        return False
+        # Check if move is valid, if not, return False
+        try:
+            move_idx = get_move_tuples(board).index(human_move)
+        except ValueError:
+            print "ERROR: Move is not legal!"
+            return False
+        else:
+            print "Move is legal"
 
-
-
+        # Update testing board
+        board = board.peek_move(legal_moves[move_idx])
 
     return True
 
