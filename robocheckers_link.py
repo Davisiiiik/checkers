@@ -15,11 +15,11 @@ class RosComm(object):
         # Node initialization
         rospy.init_node('game_logic')
         self.ai_move = rospy.Publisher('/robocheckers/ai_move', String, queue_size=10)
-        rospy.Subscriber('/robocheckers/human_move', String, self.receive_human_move_list)
+        rospy.Subscriber('/robocheckers/human_turn', String, self.receive_human_turn)
 
-        # Prepare human_move tuple attribute
+        # Prepare human_turn tuple attribute
+        self.human_turn_tuples = None
         self.human_move_list = None
-        self.human_move = None
         # Prepare player_order attribute, 0 -> Human go first, 1 -> AI go first
         self.player_order = None
 
@@ -31,50 +31,49 @@ class RosComm(object):
             list of tuples options:
         """
         move = self.tuple_move_to_list(move)
-        for i, option in enumerate(options):
-            options[i] = self.tuple_move_to_list(option)
+        options_tuples = []
+        for option in options:
+            options_tuples.append(self.tuple_move_to_list(option))
 
-        msg = '|'.join(str(e) for e in [move, options])
+        msg = '|'.join(str(e) for e in [move, options_tuples])
 
         self.ai_move.publish(msg)
 
 
-    def receive_human_move_list(self, data):
+    def receive_human_turn(self, data):
         """
             Method for receiving data from game_interface node
         """
-        self.human_move_list = eval(data.data)
+        self.human_turn_tuples = eval(data.data)
 
 
-    def get_human_move(self):
+    def get_human_move_list(self):
         """
             Method for recalculating move data from 2-coords to 1-coord
         """
-        while not self.human_move_list:
+        while not self.human_turn_tuples:
             continue
         rospy.sleep(0.001)
 
         # Calculate the square number from coordinations
-        self.human_move = []
-
-
-        #for i in range(len(self.human_move_list)-1):
-        #    self.human_move.append([self.human_move_list[i], self.human_move_list[i+1]])
-
-
-        for pos in self.human_move_list:
+        human_turn = []
+        for pos in self.human_turn_tuples:
             print "Run:", pos
             tmp = (pos[1]-1)*4 + (pos[0]+1-(pos[1]%2))/2
-            self.human_move.append(tmp)
+            human_turn.append(tmp)
 
         # If player_order is 1, rotate the chessboard
         if self.player_order:
-            self.human_move[0] = 33 - self.human_move[0]
-            self.human_move[1] = 33 - self.human_move[1]
+            human_turn[0] = 33 - human_turn[0]
+            human_turn[1] = 33 - human_turn[1]
 
-        self.human_move_list = None
-        self.human_move = tuple(self.human_move)
-        return self.human_move
+        # Change individual positions through the move to list of moves
+        self.human_move_list = []
+        for i in range(len(human_turn)-1):
+            self.human_move_list.append((human_turn[i], human_turn[i+1]))
+
+        self.human_turn_tuples = None
+        return self.human_move_list
 
 
     def tuple_move_to_list(self, ai_move):
@@ -104,36 +103,20 @@ class RosComm(object):
             return None
 
         while True:
-            while not self.human_move_list:
+            while not self.human_turn_tuples:
                 continue
             rospy.sleep(0.001)
 
-            if (0, 1) in self.human_move_list:
+            if (0, 1) in self.human_turn_tuples:
                 self.player_order = 1
                 break
-            elif (0, 0) in self.human_move_list:
+            elif (0, 0) in self.human_turn_tuples:
                 self.player_order = 0
                 break
             else:
                 print "ERROR: Invalid starting message! Expecting '[(0, 0)]' or '[(0, 1)]'!"
-                self.human_move_list = None
+                self.human_turn_tuples = None
 
-        self.human_move_list = None
+        self.human_turn_tuples = None
 
         return self.player_order
-
-if __name__ == '__main__':
-    # ONLY FOR TESTING
-    node = RosComm()
-
-    while True:
-        while not node.human_move: continue
-        rospy.sleep(0.001)
-        print node.human_move
-        
-        node.human_move = ()
-
-        node.send_ai_move((13, 2), [(23, 14), (25, 16), (7, 18), (29, 30)])
-
-        if raw_input("Send `q` to quit: ") == "q":
-            break

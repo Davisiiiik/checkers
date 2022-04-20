@@ -49,7 +49,7 @@ def main():
         if turn % 2 == player_order:
             if player_order == 0 and turn == 0:
                 print B
-                legal_moves = B.get_moves()
+                #legal_moves = B.get_moves()
                 legal_move_tuples = get_move_tuples(B)
 
                 for (i, move) in enumerate(legal_move_tuples):
@@ -60,6 +60,7 @@ def main():
             while True:
                 # Manual mode
                 if MANUAL:
+                    legal_moves = B.get_moves()
                     move_idx = raw_input("Enter your move number: ")
                     try:
                         move_idx = int(move_idx)
@@ -73,20 +74,29 @@ def main():
                         continue
 
                 # Automatic mode
-                else:
-                    human_move = node.get_human_move()
+                human_move_list = node.get_human_move_list()
 
-                try:
-                    move_idx = get_move_tuples(B).index(human_move)
-                except ValueError:
-                    print "ERROR: Move is not legal!"
-                    node.send_ai_move((-1, -1), [])
-                else:
-                    print "Move is legal"
-                    break
+                print "human_move_list:", human_move_list
 
-            B.make_move(legal_moves[move_idx])
-            print B
+                #if check_human_turn(B, human_move_list):
+                #    print "Long move is legal"
+                #    break
+                #else:
+                #    print "ERROR: Long move is not legal!"
+                #    node.send_ai_move([], legal_move_tuples)
+                #    continue
+
+                break
+
+            for human_move in human_move_list:
+                legal_moves = B.get_moves()
+                print "Executing human_move:", human_move
+                move_tuples = get_move_tuples(B)
+                print "Executing human_move:", human_move
+                move_idx = move_tuples.index(human_move)
+                B.make_move(legal_moves[move_idx])
+                print B
+
         else:
             # AI Move
             ai_move_int = cpu.make_move(B)
@@ -152,6 +162,25 @@ def get_mandatory_moves(board):
         jumps.append(int_move_to_tuple(board, move))
 
     return jumps
+
+
+def check_human_turn(board, human_move_list):
+
+    #for human_move in human_move_list:
+    human_move = human_move_list[0]
+    print "Performing human_move:", human_move
+    try:
+        move_idx = get_move_tuples(board).index(human_move)
+    except ValueError:
+        print "ERROR: Move is not legal!"
+    else:
+        print "Move is legal"
+        return False
+
+
+
+
+    return True
 
 
 def get_move_tuples(board):
