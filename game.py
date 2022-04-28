@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
     This module implements the game playing harness.
 """
@@ -6,6 +7,11 @@
 # Harness for running a checkers match.
 #
 # Last updated: July 21, 2014
+#
+# =======================================
+# David Lichosyt -- vut.cz
+#
+# Last modified: April 28, 2022
 
 import sys
 from numpy import log2
@@ -38,7 +44,7 @@ def main():
                 for (i, move) in enumerate(legal_move_tuples):
                     print "Move " + str(i) + ": " + str(move)
 
-                node.send_ai_move([], legal_move_tuples)
+                node.send_ai_move([], legal_move_tuples, robolink.OPTS)
 
             while True:
                 human_move_list = node.get_human_move_list()
@@ -50,7 +56,7 @@ def main():
                     break
                 else:
                     print "ERROR: Turn is not legal!"
-                    node.send_ai_move([], get_move_tuples(B))
+                    node.send_ai_move((-1, -1), get_move_tuples(B), robolink.OPTS)
                     continue
 
             # Move for every move in move_list
@@ -73,13 +79,13 @@ def main():
             for (i, move) in enumerate(legal_move_tuples):
                 print "Move " + str(i) + ": " + str(move)
 
-            node.send_ai_move(ai_move, legal_move_tuples)
+            node.send_ai_move(ai_move, legal_move_tuples, robolink.MOVE + robolink.OPTS)
 
         # If jumps remain, then the board will not update current player
         if B.active == current_player:
             print "Jumps must be taken."
             if turn % 2 == player_order:
-                node.send_ai_move([], get_move_tuples(B))
+                node.send_ai_move([], get_move_tuples(B),robolink.OPTS)
             continue
         else:
             current_player = B.active
@@ -90,6 +96,9 @@ def main():
         print "Congrats Black, you win!"
     else:
         print "Congrats White, you win!"
+
+    # Send message about win
+    node.send_ai_move([(B.active, player_order)], [], robolink.NONE)
     return 0
 
 

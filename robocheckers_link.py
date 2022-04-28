@@ -6,6 +6,10 @@
 import rospy
 from std_msgs.msg import String
 
+NONE = 0b00
+MOVE = 0b01
+OPTS = 0b10
+
 class RosComm(object):
     """
         Class initializing ROS Node with one publisher and one subscriber
@@ -24,18 +28,23 @@ class RosComm(object):
         self.player_order = None
 
 
-    def send_ai_move(self, move, options):
+    def send_ai_move(self, move, options, format_data):
         """
             Method for sending data to game_interface node
             tuple move:
             list of tuples options:
+            int format:
         """
-        move = self.tuple_move_to_list(move)
-        options_tuples = []
-        for option in options:
-            options_tuples.append(self.tuple_move_to_list(option))
+        if format_data & MOVE:
+            move = self.tuple_move_to_list(move)
 
-        msg = '|'.join(str(e) for e in [move, options_tuples])
+        if format_data & OPTS:  
+            options_tuples = []
+            for option in options:
+                options_tuples.append(self.tuple_move_to_list(option))
+            options = options_tuples
+
+        msg = '|'.join(str(e) for e in [move, options])
 
         self.ai_move.publish(msg)
 
