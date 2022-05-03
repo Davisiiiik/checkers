@@ -168,10 +168,12 @@ def get_move_tuples(board):
     lbj = board.left_backward_jumps()
 
     if (rfj | lfj | rbj | lbj) != 0:
+        print "LFJ:", lfj
         rfj = [(1 + i - i//9, 1 + (i + 8) - (i + 8)//9)
                     for (i, bit) in enumerate(bin(rfj)[::-1]) if bit == '1']
-        lfj = [(1 + i - i//9, 1 + (i + 10) - (i + 8)//9)
+        lfj = [(1 + i - i//9, 1 + (i + 10) - (i + 10)//9)
                     for (i, bit) in enumerate(bin(lfj)[::-1]) if bit == '1']
+        print "LFJ tuple:", lfj
         rbj = [(1 + i - i//9, 1 + (i - 8) - (i - 8)//9)
                     for (i, bit) in enumerate(bin(rbj)[::-1]) if bit ==  '1']
         lbj = [(1 + i - i//9, 1 + (i - 10) - (i - 10)//9)
