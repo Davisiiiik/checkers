@@ -67,7 +67,6 @@ class RosComm(object):
         # Calculate the square number from coordinations
         human_turn = []
         for pos in self.human_turn_tuples:
-            print "Run:", pos
             tmp = (pos[1]-1)*4 + (pos[0]+1-(pos[1]%2))/2
             human_turn.append(tmp)
 
