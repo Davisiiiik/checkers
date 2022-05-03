@@ -68,7 +68,7 @@ def main():
 
         else:
             # AI Move
-            ai_move_int = cpu.make_move(B)
+            ai_move_int = cpu.make_move(B, 5)
             ai_move = int_move_to_tuple(B, ai_move_int)
             B.make_move(ai_move_int)
 
